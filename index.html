@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CrystalVisuals — панель владельца</title>
+<style>
+  :root{
+    --bg:#06070d; --bg-2:#0b0d18;
+    --line:rgba(255,255,255,.08); --line-strong:rgba(255,255,255,.16);
+    --text:#f2f4ff; --muted:#9096ad; --muted-2:#666b80;
+    --accent:#ff4d23; --accent-2:#ff8a3c;
+    --ok:#3ddc84; --warn:#ffb020; --err:#ff5a5a;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif;
+    background:var(--bg);color:var(--text);min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:28px 20px 60px}
+
+  .top{display:flex;align-items:center;gap:12px;margin-bottom:24px}
+  .top b{font-size:17px;letter-spacing:-.01em}
+  .top .sp{margin-left:auto;display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted)}
+
+  .btn{
+    height:36px;padding:0 16px;border:1px solid var(--line);border-radius:10px;
+    background:rgba(255,255,255,.04);color:var(--text);font:inherit;font-size:13.5px;
+    cursor:pointer;transition:background .15s,border-color .15s,opacity .15s;
+  }
+  .btn:hover:not(:disabled){background:rgba(255,255,255,.09);border-color:var(--line-strong)}
+  .btn:disabled{opacity:.5;cursor:default}
+  .btn--go{background:linear-gradient(180deg,var(--accent-2),var(--accent));
+    border-color:transparent;color:#fff;font-weight:600}
+  .btn--go:hover:not(:disabled){filter:brightness(1.08);background:linear-gradient(180deg,var(--accent-2),var(--accent))}
+  .btn--sm{height:30px;padding:0 11px;font-size:12.5px;border-radius:8px}
+
+  .card{background:var(--bg-2);border:1px solid var(--line);border-radius:18px;padding:26px}
+  .login{max-width:400px;margin:8vh auto 0}
+  .login h1{font-size:22px;margin-bottom:6px}
+  .login p{color:var(--muted);font-size:13.5px;margin-bottom:20px}
+
+  label{display:block;font-size:11.5px;color:var(--muted);margin:0 0 6px;
+    letter-spacing:.04em;text-transform:uppercase}
+  input,select{
+    width:100%;height:42px;padding:0 13px;border-radius:11px;
+    border:1px solid var(--line);background:rgba(255,255,255,.035);color:var(--text);
+    font:inherit;font-size:14.5px;transition:border-color .15s
+  }
+  input:focus,select:focus{outline:none;border-color:var(--accent)}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .field{margin-bottom:14px}
+
+  .msg{min-height:20px;font-size:13px;margin:10px 0}
+  .msg.err{color:var(--err)} .msg.ok{color:var(--ok)}
+
+  .tabs{display:flex;gap:6px;margin-bottom:18px;border-bottom:1px solid var(--line)}
+  .tab{padding:9px 4px;margin-right:18px;border:0;background:none;color:var(--muted);
+    font:inherit;font-size:14.5px;cursor:pointer;border-bottom:2px solid transparent;
+    transition:color .15s,border-color .15s}
+  .tab:hover{color:var(--text)}
+  .tab.on{color:var(--text);border-bottom-color:var(--accent)}
+
+  .scroll{overflow-x:auto;border:1px solid var(--line);border-radius:16px}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:680px}
+  th,td{padding:11px 14px;text-align:left;border-bottom:1px solid var(--line);vertical-align:middle}
+  th{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;
+    font-weight:600;background:rgba(255,255,255,.02);white-space:nowrap}
+  tr:last-child td{border-bottom:0}
+  tbody tr{transition:background .12s}
+  tbody tr:hover{background:rgba(255,255,255,.025)}
+  .mono{font-family:ui-monospace,Consolas,monospace;font-size:12.5px;letter-spacing:.02em}
+
+  .pill{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11.5px;
+    font-weight:600;letter-spacing:.02em}
+  .pill--ok{background:rgba(61,220,132,.14);color:var(--ok)}
+  .pill--warn{background:rgba(255,176,32,.14);color:var(--warn)}
+  .pill--off{background:rgba(255,90,90,.13);color:var(--err)}
+  .pill--mute{background:rgba(255,255,255,.07);color:var(--muted)}
+
+  .empty{padding:44px 20px;text-align:center;color:var(--muted-2);font-size:14px}
+
+  .grant{display:grid;grid-template-columns:1fr 130px 120px auto;gap:10px;align-items:end;
+    margin-bottom:16px;padding:16px;border:1px solid var(--line);border-radius:16px;
+    background:var(--bg-2)}
+  .grant .field{margin:0}
+  .acts{display:flex;gap:6px;flex-wrap:wrap}
+
+  .bar{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+  .bar .count{color:var(--muted);font-size:13px;margin-left:auto}
+
+  .out{margin-top:16px;padding:14px;border-radius:12px;background:rgba(61,220,132,.07);
+    border:1px solid rgba(61,220,132,.22);font-size:13.5px}
+  .out b{display:block;margin-bottom:8px;color:var(--ok)}
+  .out .mono{user-select:all;font-size:14px;line-height:1.8}
+
+  .hint{color:var(--muted-2);font-size:12.5px;margin-top:10px;line-height:1.6}
+  .hidden{display:none!important}
+  .server{margin-bottom:18px;padding:14px;border-radius:14px;
+    background:rgba(255,176,32,.07);border:1px solid rgba(255,176,32,.22)}
+  .server label{color:var(--warn)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ================= ВХОД ================= -->
+  <div class="card login" id="loginView">
+    <h1>Панель владельца</h1>
+    <p>Войдите аккаунтом с ролью OWNER или ADMIN.</p>
+
+    <div class="server" id="serverBox">
+      <div class="field">
+        <label for="apiUrl">Адрес сервера (API)</label>
+        <input id="apiUrl" placeholder="https://ваш-домен" spellcheck="false" />
+      </div>
+      <div class="hint" style="margin-top:0">
+        Впишите сюда адрес, где запущен сервер CrystalVisuals, без пути <code>/api</code>.
+        Сохраняется в этом браузере — заново вводить не придётся.
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="lgUser">Логин</label>
+      <input id="lgUser" autocomplete="username" spellcheck="false" />
+    </div>
+    <div class="field">
+      <label for="lgPass">Пароль</label>
+      <input id="lgPass" type="password" autocomplete="current-password" />
+    </div>
+    <div class="msg" id="lgMsg"></div>
+    <button class="btn btn--go" id="lgBtn" style="width:100%;height:42px">Войти</button>
+  </div>
+
+  <!-- ================= ПАНЕЛЬ ================= -->
+  <div id="panelView" class="hidden">
+    <div class="top">
+      <b>CrystalVisuals</b>
+      <div class="sp">
+        <span id="whoami"></span>
+        <button class="btn btn--sm" onclick="editServer()">сервер</button>
+        <button class="btn btn--sm" onclick="doLogout()">выйти</button>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab on" data-tab="users" onclick="switchTab('users')">Пользователи</button>
+      <button class="tab" data-tab="keys" onclick="switchTab('keys')">Ключи</button>
+    </div>
+
+    <!-- ---------- Пользователи ---------- -->
+    <section id="tabUsers">
+      <div class="grant">
+        <div class="field">
+          <label for="gUser">Логин</label>
+          <input id="gUser" placeholder="vasya" spellcheck="false" />
+        </div>
+        <div class="field">
+          <label for="gPlan">Тариф</label>
+          <select id="gPlan">
+            <option value="premium">Премиум</option>
+            <option value="free">Free</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="gDays">Срок, дней</label>
+          <input id="gDays" type="number" value="30" min="0" />
+        </div>
+        <button class="btn btn--go" onclick="grantSub()">Выдать</button>
+      </div>
+      <div class="hint">
+        Срок <b>0</b> — навсегда. Продление считается от конца текущего срока,
+        а не от сегодня, поэтому повторная выдача не съедает остаток.
+        Подписка — счёт на сайте; чтобы кент заиграл, ему ещё нужен ключ
+        на вкладке «Ключи».
+      </div>
+
+      <div class="bar" style="margin-top:18px">
+        <button class="btn btn--sm" onclick="loadUsers()">Обновить</button>
+        <span class="count" id="usersCount"></span>
+      </div>
+      <div class="scroll">
+        <table>
+          <thead><tr>
+            <th>Логин</th><th>Почта</th><th>Роль</th><th>Подписка</th><th>До</th><th></th>
+          </tr></thead>
+          <tbody id="usersBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ---------- Ключи ---------- -->
+    <section id="tabKeys" class="hidden">
+      <div class="grant">
+        <div class="field">
+          <label for="kCount">Сколько ключей</label>
+          <input id="kCount" type="number" value="1" min="1" max="500" />
+        </div>
+        <div class="field">
+          <label for="kPlan">Тариф</label>
+          <select id="kPlan">
+            <option value="premium">Премиум</option>
+            <option value="free">Free</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="kDays">Срок, дней</label>
+          <input id="kDays" type="number" value="30" min="0" />
+        </div>
+        <button class="btn btn--go" onclick="createKeys()">Создать</button>
+      </div>
+      <div class="out hidden" id="keysOut">
+        <b>Готово. Выдайте эти ключи покупателям — при первом вводе они привяжутся к их компьютеру.</b>
+        <div class="mono" id="keysOutList"></div>
+      </div>
+      <div class="hint">
+        Срок <b>0</b> — бессрочный ключ. Ключ привязывается к железу один раз;
+        чтобы человек переехал на другой компьютер, сбросьте привязку.
+      </div>
+
+      <div class="bar" style="margin-top:18px">
+        <button class="btn btn--sm" onclick="loadKeys()">Обновить</button>
+        <span class="count" id="keysCount"></span>
+      </div>
+      <div class="scroll">
+        <table>
+          <thead><tr>
+            <th>Ключ</th><th>Тариф</th><th>HWID</th><th>До</th><th>Статус</th><th></th>
+          </tr></thead>
+          <tbody id="keysBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+/*
+ * АДРЕС СЕРВЕРА задаётся в поле на экране входа и хранится в этом браузере.
+ * Править код при переезде сервера не нужно.
+ */
+const STORE_TOKEN = "cv_admin_token";
+const STORE_URL   = "cv_admin_api";
+
+let token = localStorage.getItem(STORE_TOKEN) || "";
+let apiBase = (localStorage.getItem(STORE_URL) || "").replace(/\/+$/, "");
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => (
+  { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+function say(id, text, kind) {
+  const el = $(id);
+  el.textContent = text;
+  el.className = "msg" + (kind ? " " + kind : "");
+}
+
+function showServerBox(visible) {
+  $("serverBox").classList.toggle("hidden", !visible);
+}
+
+function editServer() {
+  const next = prompt("Адрес сервера (API), без /api:", apiBase);
+  if (next === null) return;
+  localStorage.setItem(STORE_URL, next.replace(/\/+$/, ""));
+  location.reload();
+}
+
+// ------------------------------------------------------------------ запросы
+
+/**
+ * Запрос к API. Ошибку сети превращаем в внятный текст: в панели
+ * «Failed to fetch» бесполезно, особенно когда API ещё не задеплоен.
+ */
+async function call(path, options) {
+  if (!apiBase) throw new Error("Сначала укажите адрес сервера");
+
+  const opts = Object.assign({ headers: {} }, options || {});
+  opts.headers = Object.assign({}, opts.headers);
+  if (token) opts.headers.Authorization = "Bearer " + token;
+  if (opts.body) opts.headers["Content-Type"] = "application/json";
+
+  let response;
+  try {
+    response = await fetch(apiBase + "/api" + path, opts);
+  } catch {
+    throw new Error("Сервер недоступен. Проверьте адрес и что API запущен");
+  }
+
+  const data = await response.json().catch(() => ({}));
+
+  if (response.status === 401 && path.indexOf("/auth/login") < 0) {
+    doLogout(true);
+    throw new Error("Сессия истекла, войдите снова");
+  }
+
+  if (!response.ok) throw new Error(data.error || ("Ошибка " + response.status));
+  return data;
+}
+
+// -------------------------------------------------------------------- вход
+
+async function doLogin() {
+  const url = $("apiUrl").value.trim().replace(/\/+$/, "");
+  if (!url) { say("lgMsg", "Укажите адрес сервера", "err"); return; }
+
+  const u = $("lgUser").value.trim();
+  const p = $("lgPass").value;
+  if (!u || !p) { say("lgMsg", "Заполните логин и пароль", "err"); return; }
+
+  $("lgBtn").disabled = true;
+  say("lgMsg", "");
+
+  try {
+    const data = await call("/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ username: u, password: p }),
+    });
+    token = data.token;
+    localStorage.setItem(STORE_TOKEN, token);
+    apiBase = url;
+    localStorage.setItem(STORE_URL, url);
+    $("lgPass").value = "";
+    showServerBox(false);
+    await openPanel();
+  } catch (error) {
+    say("lgMsg", error.message, "err");
+  } finally {
+    $("lgBtn").disabled = false;
+  }
+}
+
+function doLogout(silent) {
+  token = "";
+  localStorage.removeItem(STORE_TOKEN);
+  $("panelView").classList.add("hidden");
+  $("loginView").classList.remove("hidden");
+  if (!silent) say("lgMsg", "");
+}
+
+async function openPanel() {
+  const me = await call("/user/profile");
+  const role = String(me.role || "").toUpperCase();
+
+  // Не админ сюда попасть не должен: показываем отказ, а не пустые таблицы
+  if (role !== "OWNER" && role !== "ADMIN") {
+    doLogout();
+    say("lgMsg", "У этой учётной записи нет прав администратора", "err");
+    return;
+  }
+
+  $("loginView").classList.add("hidden");
+  $("panelView").classList.remove("hidden");
+  $("whoami").textContent = me.username + " · " + role;
+
+  await loadUsers();
+  await loadKeys();
+}
+
+// ---------------------------------------------------------------- вкладки
+
+function switchTab(name) {
+  document.querySelectorAll(".tab").forEach((b) => {
+    b.classList.toggle("on", b.dataset.tab === name);
+  });
+  $("tabUsers").classList.toggle("hidden", name !== "users");
+  $("tabKeys").classList.toggle("hidden", name !== "keys");
+  $("keysOut").classList.add("hidden");
+}
+
+// ------------------------------------------------------------ пользователи
+
+function subInfo(user) {
+  const sub = user.subscription;
+  if (!sub || !sub.outDate) return { pill: '<span class="pill pill--mute">нет</span>', until: "—" };
+
+  const forever = sub.lifetime || sub.outDate.startsWith("2999");
+  if (forever) return { pill: '<span class="pill pill--ok">навсегда</span>', until: "бессрочно" };
+
+  // Считаем от Date.now(), а не локальной даты: сервер отдаёт даты в UTC
+  // и иначе «осталось» съезжало бы на сутки
+  const days = Math.ceil((new Date(sub.outDate) - Date.now()) / 86400000);
+  return {
+    pill: '<span class="pill pill--' + (days > 0 ? "ok" : "off") + '">' +
+          (days > 0 ? days + " дн." : "истёкла") + "</span>",
+    until: sub.outDate.slice(0, 10),
+  };
+}
+
+function rolePill(user) {
+  const r = String(user.role || "").toUpperCase();
+  if (r === "OWNER") return '<span class="pill pill--ok">владелец</span>';
+  if (r === "ADMIN") return '<span class="pill pill--warn">админ</span>';
+  if (user.banned) return '<span class="pill pill--off">заблокирован</span>';
+  return '<span class="pill pill--mute">user</span>';
+}
+
+async function loadUsers() {
+  const body = $("usersBody");
+  try {
+    const data = await call("/admin/users");
+    const users = data.users || [];
+
+    $("usersCount").textContent = users.length
+      ? "всего " + users.length + ", с подпиской " + users.filter((u) => u.subscription).length
+      : "";
+
+    if (!users.length) {
+      body.innerHTML = '<tr><td colspan="6" class="empty">Аккаунтов пока нет</td></tr>';
+      return;
+    }
+
+    body.innerHTML = users.map((u) => {
+      const info = subInfo(u);
+      const name = esc(u.username);
+      return "<tr>" +
+        "<td><b>" + name + "</b></td>" +
+        "<td class='mono'>" + esc(u.email || "—") + "</td>" +
+        "<td>" + rolePill(u) + "</td>" +
+        "<td>" + info.pill + "</td>" +
+        "<td class='mono'>" + esc(info.until) + "</td>" +
+        "<td><div class='acts'>" +
+          "<button class='btn btn--sm' onclick='quickGrant(\"" + name + "\")'>продлить</button>" +
+          "<button class='btn btn--sm' onclick='resetPass(\"" + name + "\")'>пароль</button>" +
+        "</div></td>" +
+      "</tr>";
+    }).join("");
+  } catch (error) {
+    body.innerHTML = '<tr><td colspan="6" class="empty">' + esc(error.message) + "</td></tr>";
+  }
+}
+
+async function grantSub() {
+  const username = $("gUser").value.trim();
+  if (!username) { alert("Укажите логин"); return; }
+  await sendSub(username, Number($("gDays").value || 0), $("gPlan").value);
+}
+
+/** Продление из строки таблицы берёт тариф и срок, выбранные в форме сверху. */
+async function quickGrant(username) {
+  const days = Number($("gDays").value || 0);
+  const plan = $("gPlan").value;
+  const label = days > 0 ? days + " дн." : "навсегда";
+  if (!confirm("Выдать " + username + " — " + plan + ", " + label + "?")) return;
+  await sendSub(username, days, plan);
+}
+
+async function sendSub(username, days, plan) {
+  try {
+    await call("/admin/subscription", {
+      method: "POST",
+      body: JSON.stringify({ username: username, plan: plan, days: days }),
+    });
+    $("gUser").value = "";
+    await loadUsers();
+  } catch (error) {
+    alert(error.message);
+  }
+}
+
+async function resetPass(username) {
+  const pass = prompt("Новый пароль для " + username + " (минимум 8 символов):");
+  if (!pass) return;
+  try {
+    await call("/admin/password", {
+      method: "POST",
+      body: JSON.stringify({ username: username, password: pass }),
+    });
+    alert("Пароль изменён");
+  } catch (error) {
+    alert(error.message);
+  }
+}
+
+// -------------------------------------------------------------------- ключи
+
+async function loadKeys() {
+  const body = $("keysBody");
+  try {
+    const data = await call("/admin/keys");
+    const keys = data.keys || [];
+
+    const bound = keys.filter((k) => k.hwid).length;
+    $("keysCount").textContent = keys.length
+      ? "всего " + keys.length + ", привязано " + bound + ", свободно " + (keys.length - bound)
+      : "";
+
+    if (!keys.length) {
+      body.innerHTML = '<tr><td colspan="6" class="empty">Ключей пока нет — создайте выше</td></tr>';
+      return;
+    }
+
+    body.innerHTML = keys.map((k) => {
+      let status;
+      if (!k.enabled) status = '<span class="pill pill--off">отключён</span>';
+      else if (k.expiresAt && new Date(k.expiresAt) < new Date()) status = '<span class="pill pill--off">истёк</span>';
+      else if (k.hwid) status = '<span class="pill pill--warn">привязан</span>';
+      else status = '<span class="pill pill--ok">свободен</span>';
+
+      const until = k.expiresAt ? k.expiresAt.slice(0, 10) : "бессрочно";
+      const key = esc(k.key);
+
+      return "<tr>" +
+        "<td class='mono'>" + key +
+          (k.note ? "<br><small style='color:var(--muted-2)'>" + esc(k.note) + "</small>" : "") + "</td>" +
+        "<td>" + esc(k.plan) + "</td>" +
+        "<td class='mono'>" + esc(k.hwid || "—") + "</td>" +
+        "<td class='mono'>" + esc(until) + "</td>" +
+        "<td>" + status + "</td>" +
+        "<td><div class='acts'>" +
+          (k.hwid ? "<button class='btn btn--sm' onclick='keyAct(\"" + key + "\",\"reset-hwid\")'>сбросить</button>" : "") +
+          "<button class='btn btn--sm' onclick='keyAct(\"" + key + "\",\"extend\")'>+30 дн.</button>" +
+          "<button class='btn btn--sm' onclick='keyAct(\"" + key + "\",\"" + (k.enabled ? "disable" : "enable") + "\")'>" +
+            (k.enabled ? "отключить" : "включить") + "</button>" +
+        "</div></td>" +
+      "</tr>";
+    }).join("");
+  } catch (error) {
+    body.innerHTML = '<tr><td colspan="6" class="empty">' + esc(error.message) + "</td></tr>";
+  }
+}
+
+async function createKeys() {
+  try {
+    const data = await call("/admin/keys", {
+      method: "POST",
+      body: JSON.stringify({
+        count: Number($("kCount").value || 1),
+        plan: $("kPlan").value,
+        days: Number($("kDays").value || 0),
+      }),
+    });
+
+    const created = data.created || [];
+    $("keysOut").classList.remove("hidden");
+    $("keysOutList").innerHTML = created.map((k) => esc(k.key)).join("<br>");
+    await loadKeys();
+  } catch (error) {
+    alert(error.message);
+  }
+}
+
+async function keyAct(key, action) {
+  const labels = {
+    "reset-hwid": "Сбросить привязку к железу?",
+    "disable": "Отключить ключ?",
+    "enable": "Включить ключ?",
+  };
+  if (labels[action] && !confirm(labels[action])) return;
+
+  try {
+    await call("/admin/keys/update", {
+      method: "POST",
+      body: JSON.stringify({ key: key, action: action }),
+    });
+    await loadKeys();
+  } catch (error) {
+    alert(error.message);
+  }
+}
+
+// -------------------------------------------------------------------- старт
+
+$("lgBtn").addEventListener("click", doLogin);
+$("lgPass").addEventListener("keydown", (e) => { if (e.key === "Enter") doLogin(); });
+$("lgUser").addEventListener("keydown", (e) => { if (e.key === "Enter") $("lgPass").focus(); });
+
+$("apiUrl").value = apiBase;
+showServerBox(!apiBase);
+
+// Токен из прошлой сессии: проверяем, что он рабочий, и открываем панель
+if (token && apiBase) {
+  openPanel().catch(() => doLogout(true));
+}
+</script>
+</body>
+</html>
